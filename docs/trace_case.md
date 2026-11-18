@@ -34,7 +34,7 @@ Output của `lab9.trace_case` (rút gọn):
 
 | Trường | Nội dung |
 |---|---|
-| Trial | `seeded_regression C-002@11`, item E-002; run ID `E-seeded_regression-20261118-c4c3` (`src/reports/eval_seeded_regression.json`, eval set `c4c3a9299881`) |
+| Trial | `seeded_regression C-002@11`, item E-002; run ID `E-seeded_regression-20261118-23ae` (`src/reports/eval_seeded_regression.json`, eval set `23ae2725aa42`) |
 | Triệu chứng | Grader Lab 8 FAIL `status resolved != denied`. Ledger ghi **20.000đ** (`refund_count` 1) trong khi nhãn là 0. Reply "Dạ, LogiX đã hoàn 20.000đ cho đơn O-202." trôi chảy, lịch sự và *khớp ledger*, nên đọc reply sẽ không thấy lỗi: tiền đã bị chi sai. Trong report, dòng E-002@11 có `refund_amount_correct` = false, `pass_rate` = false, `db_fact_kept` = false, còn `reply_amount_matches_ledger` = true. |
 | Bước sai đầu tiên | **Event #3 `model_override`**, payload `{"delay_days": 5}`: agent ghi đè số ngày trễ của DB (2) bằng số khách tự viết trong ticket (5). |
 | Vì sao là bước *đầu tiên* | #1 `handoff` đúng contract (`principal_scope: owner_order_only`, chỉ cho tool read-only). #2 `investigator` đọc đúng DB: `order_id O-202`, `delay_days: 2`, nghĩa là agent **đã có** dữ kiện đúng trước khi sai. #4 `quote 20000 entitled` dùng đúng công thức nhưng trên `delay_days` = 5 đã bị ghi đè, nên chỉ là hệ quả của #3. #5 và #6 cũng là hệ quả (ghi refund, báo khách). |

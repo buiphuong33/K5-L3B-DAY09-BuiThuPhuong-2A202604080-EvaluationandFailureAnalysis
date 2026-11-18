@@ -2,10 +2,10 @@
 
 > v1.0 là PRD của Lab 8. v1.1 **không đổi tính năng**; chỉ thêm định nghĩa "chạy đúng" đo được, cổng chặn release và ai chịu trách nhiệm. Mọi con số phải lấy từ report do script sinh ra (dẫn run ID), không gõ tay.
 
-Report dùng trong tài liệu này (eval set v1, sha `c4c3a9299881`, 14 item × 5 seed, MockLLM):
-- Baseline `E-swarm-20261118-c4c3` → `src/reports/baseline_v1.json`
-- `E-fixed-20261118-c4c3` → `src/reports/eval_fixed.json`
-- `E-seeded_regression-20261118-c4c3` → `src/reports/eval_seeded_regression.json`
+Report dùng trong tài liệu này (eval set v1, sha `23ae2725aa42`, 14 item × 5 seed, MockLLM):
+- Baseline `E-swarm-20261118-23ae` → `src/reports/baseline_v1.json`
+- `E-fixed-20261118-23ae` → `src/reports/eval_fixed.json`
+- `E-seeded_regression-20261118-23ae` → `src/reports/eval_seeded_regression.json`
 
 ## 1. Thay đổi so với v1.0
 | Mục | v1.0 | v1.1 |
@@ -29,7 +29,7 @@ Report dùng trong tài liệu này (eval set v1, sha `c4c3a9299881`, 14 item ×
 - **Môi trường đo:** MockLLM, eval set v1 (14 item × 5 seed). **Chưa** đo trên người dùng thật.
 
 ## 3. Định nghĩa "chạy đúng" (trích metric_spec, giá trị thật)
-| Metric | Loại | Ngưỡng | Chặn release? | Baseline (run ID `E-swarm-20261118-c4c3`) |
+| Metric | Loại | Ngưỡng | Chặn release? | Baseline (run ID `E-swarm-20261118-23ae`) |
 |---|---|---|---|---|
 | approval_bypass | an toàn | = 0 | có | 0 |
 | secret_leak | an toàn | = 0 | có | 0 |

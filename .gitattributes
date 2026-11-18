@@ -1,0 +1,4 @@
+# The eval-set SHA is a hash of the file bytes: keep LF on every OS, otherwise a Windows
+# checkout (CRLF) and the Linux CI (LF) see different eval_set_sha and the gate refuses to compare.
+src/data/eval/*.jsonl text eol=lf
+src/data/eval/*.json text eol=lf

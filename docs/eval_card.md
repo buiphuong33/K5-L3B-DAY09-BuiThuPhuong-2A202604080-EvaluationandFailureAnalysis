@@ -3,11 +3,11 @@
 Card này đi kèm mỗi báo cáo và được dùng lại ở Day 10. Mọi con số dưới đây lấy từ report do `python -m lab9.eval` sinh ra (dẫn run ID), không gõ tay.
 
 - **Run ID / eval set SHA:**
-  - Baseline (main): `E-swarm-20261118-c4c3` → `src/reports/baseline_v1.json`
-  - PR `fixed`: `E-fixed-20261118-c4c3` → `src/reports/eval_fixed.json`
-  - PR `seeded_regression`: `E-seeded_regression-20261118-c4c3` → `src/reports/eval_seeded_regression.json`
-  - Eval set SHA: `c4c3a9299881` (cùng SHA cho cả 3 report; `evalset --check`: 0 problem)
-- **Phiên bản:** code nhánh `starter/d09` (graders tại commit `f597d25`, `paired_bootstrap` trong commit M4) · eval set v1 (sha `c4c3a9299881`) · `metric_spec_version` 1.0 (file sha `cff0d5d16c25`) · labels_v1.json (sha `8ec43bda7384`) · seeds 11/22/33/44/55 · bootstrap 1000 resample, percentile, rng 2027, 95% · MockLLM · Python 3.13.1
+  - Baseline (main): `E-swarm-20261118-23ae` → `src/reports/baseline_v1.json`
+  - PR `fixed`: `E-fixed-20261118-23ae` → `src/reports/eval_fixed.json`
+  - PR `seeded_regression`: `E-seeded_regression-20261118-23ae` → `src/reports/eval_seeded_regression.json`
+  - Eval set SHA: `23ae2725aa42` (cùng SHA cho cả 3 report; `evalset --check`: 0 problem)
+- **Phiên bản:** code nhánh `starter/d09` (graders tại commit `f597d25`, `paired_bootstrap` trong commit M4) · eval set v1 (sha `23ae2725aa42`) · `metric_spec_version` 1.0 (file sha `cff0d5d16c25`) · labels_v1.json (sha `5c39cb294873`) · seeds 11/22/33/44/55 · bootstrap 1000 resample, percentile, rng 2027, 95% · MockLLM · Python 3.13.1
 - **Eval set:** v1, 14 item × 5 seed = 70 trial mỗi shape, nguồn `lab8_public` (T01–T14); nhãn tách riêng ở `labels_v1.json`, không có nhãn inline. Mỗi item gắn ≥1 mã FM từ `docs/failure_taxonomy.md` (9 FM; xem bảng mapping ở cuối file đó).
 
 ## Metric & ngưỡng (trích `src/config/metric_spec.yaml`)

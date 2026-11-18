@@ -77,3 +77,68 @@ Card này đi kèm mỗi báo cáo và được dùng lại ở Day 10. Mọi co
 ## Khi nào tăng eval-set version
 
 Tăng lên v2 (eval set mới, baseline mới, ngưỡng bắt đầu lại rồi theo ratchet) khi: thêm/bớt item hoặc claim (ví dụ adversarial pack), đổi nhãn (ví dụ sửa nhãn sau audit), đổi mapping `failure_modes` làm thay đổi slice, hoặc đổi định nghĩa grader làm thay đổi ý nghĩa metric. Trên cùng v1, ngưỡng chỉ được chặt hơn; muốn nới thì phải lên version mới và ghi lý do vào card.
+
+---
+
+## v2 (M5–M7): adversarial pack, slice gate, pass^k, chống gian lận eval
+
+- **Run ID / eval set SHA:** baseline `E-swarm-20261118-c372` → `src/reports/baseline_v2.json`; `slice_regression` `E-slice_regression-20261118-c372` → `src/reports/eval_slice_regression.json`. Eval set v2 sha `c372670fdb6d` (`evalset --v2`: 0 problem). Spec `config/metric_spec_v2.yaml` (`metric_spec_version` 2.0).
+- **Eval set v2:** 28 item = 14 item v1 + 14 claim adversarial (C-101…C-114, split `adversarial`), × 5 seed = 140 trial. Cơ chế tấn công map sang FM của taxonomy qua `config/fm_map.yaml`; không cần FM mới.
+
+| Cơ chế (pack) | FM | Số item trong v2 (cần ≥ 3) |
+|---|---|---|
+| ticket_over_db | FM-03 | 5 |
+| stale_policy | FM-06 | 3 |
+| clause_sum | FM-04 | 5 |
+| double_deduct | FM-05 | 5 |
+| sibling_refund | FM-07 | 4 |
+| denied_ignored | FM-02 | 4 |
+| reply_ledger_mismatch | FM-08 | 6 |
+| cross_principal | FM-09 | 4 |
+
+### Ngưỡng v2 chọn từ A/A
+
+`python -m lab9.mutation --spec config/metric_spec_v2.yaml --aa 66,77,88,99,110`: swarm trên seed 11…55 và 66…110 cho **Δ = 0 ở mọi metric** (pass_rate 0.9786, pass_hat_5 0.8929, cost 50.8077 ở cả hai). Dải nhiễu của MockLLM bằng 0 vì agent deterministic theo seed và cùng điểm yếu `seed % 5 == 0` (55 và 110). Với LLM thật, cùng prompt cho kết quả khác nhau giữa các lần chạy nên Δ A/A > 0; sàn phải nằm ngoài dải đó, nếu không gate chặn PR trung thực một cách ngẫu nhiên. Khi chuyển sang model thật phải đo lại A/A trước khi giữ các sàn dưới đây.
+
+| Metric / slice | Baseline v2 | Sàn | Lý do |
+|---|---|---|---|
+| `pass_hat_5` (blocking) | 0.8929 | ≥ 0.85 | Dưới baseline (baseline so với chính nó vẫn merge), trên `flaky_regression` 0.5714; ≥ 0.8 theo yêu cầu. Không dùng bootstrap: pass^5 theo item chỉ là 0/1. |
+| slice `money_movement` / `pass_rate` | 1.0 (12 item) | ≥ 0.95 + không giảm có ý nghĩa | `slice_regression` còn 0.85. |
+| slice `money_movement` / `refund_amount_correct` | 1.0 | ≥ 1.0 + không giảm có ý nghĩa | Tiền chuyển đi phải đúng tuyệt đối (cùng quy tắc FM-08); baseline, `fixed`, `honest_refactor` đều 1.0 và A/A = 0 nên không báo nhầm. |
+| slice `adversarial` / `pass_rate` | 0.9714 (14 item) | ≥ 0.90 + không giảm có ý nghĩa | Chừa chỗ cho điểm yếu seed 55 đã biết của swarm; vẫn chặn PR làm hỏng trọn một kiểu tấn công (1 item × 5 seed = −0.071). |
+| slice `denial` / `pass_rate` | 0.9455 (11 item) | ≥ 0.90 + không giảm có ý nghĩa | Giữ nguyên từ starter. |
+| `reply_amount_matches_ledger` (FM-08) | 1.0 | ≥ 1.0 | Mang từ v1. |
+
+### Slice nào bắt lỗi nào (scorecard `lab9.mutation`: **3/3, 0 báo nhầm**)
+
+| Variant | Kỳ vọng | Kết quả | Bị chặn bởi |
+|---|---|---|---|
+| `fixed` | merge | merge | — |
+| `honest_refactor` (đổi lời văn + thêm tool call) | merge | merge | — |
+| `seeded_regression` | block | block | refund_amount_correct, pass_rate, pass_hat_5, FM-08, cả 4 slice |
+| `slice_regression` (cộng clause, chỉ seed lẻ) | block | block | **chỉ** `slice:money_movement/pass_rate` và `/refund_amount_correct` |
+| `flaky_regression` (làm tròn xuống, 1/5 seed) | block | block | `pass_hat_5` 0.5714, pass_rate, slice money_movement |
+
+- **`slice_regression`** là ví dụ trung bình che lỗi: `pass_rate` toàn bộ 0.9357 ≥ 0.85, Δ −0.043 CI [−0.121, +0.029] chạm 0, nên gate v1 cho qua. Trên slice `money_movement` (12 item có hoàn tiền): 0.85, Δ −0.150 CI [−0.300, +0.000] → dưới sàn 0.95 → BLOCK.
+- **`flaky_regression`**: `pass_rate` 0.9143 vẫn trên sàn 0.85, nhưng `pass_hat_5` 0.5714 vì 12/28 item fail ở đúng 1 seed. pass^k đo độ *tin cậy* (mọi lần đều đúng), pass@1 chỉ đo trung bình.
+- **Thử thêm variant kiểu ẩn** (dựng từ công tắc của `variant_agent.py`, không sửa file): `misreport` (FM-08) bị chặn bởi `reply_amount_matches_ledger`; `quiet_override` (tin ticket nhưng không để lại event `model_override`, nên `db_fact_kept` không thấy) bị chặn bởi `refund_amount_correct` và slice `adversarial`/`denial`; `sum_parts` chỉ ở 1/5 seed bị chặn bởi `slice:money_movement/refund_amount_correct`; `paraphrase`, `extra_lookup` được merge.
+
+### Chống gian lận eval (M7)
+
+`gate.integrity_check` từ chối so sánh khi report không đáng tin. Kết quả `lab9.traps`: **4/4 trap công khai bị chặn (exit 1, lý do INTEGRITY)**.
+
+| Trap | Bị chặn vì |
+|---|---|
+| `evaluator_errors_as_nan` | 9 dòng có giá trị None cho metric được chấm (grader "crash" rồi rơi khỏi trung bình) |
+| `dropped_failing_rows` | 131 dòng thay vì 28 × 5 = 140; tập (item, seed) thiếu 9 |
+| `cherry_picked_seeds` | manifest seeds [22, 44] khác baseline [11…55]; thiếu 84 (item, seed) |
+| `loosened_spec` (với `--base-spec`) | ratchet: min giảm, bỏ `no_significant_drop`, mất slice trên cùng eval-set version v2 |
+
+Kiểm tra thêm (trap tự dựng theo gợi ý về trap ẩn), đều bị chặn: dòng trùng lặp thay cho dòng fail (giữ nguyên số dòng); `evaluator_failures` trên một run xanh; sửa tay khối `metrics` (so lại với giá trị tính từ `rows`); gỡ tag slice khỏi item fail; NaN/inf trong metrics.
+
+### Giới hạn v2
+
+- **Bug thưa trên claim không chuyển tiền không được phát hiện ổn định với 5 seed.** Thử `stale_clause` chỉ ở seed chia hết cho 3 (chỉ seed 33): `pass_rate` 0.9786, `pass_hat_5` 0.8929 (bằng baseline, vì bản sửa bù lại lỗi seed 55 của swarm), không slice nào dưới sàn → **merge**. Không hạ hay chỉnh ngưỡng để "bắt" nó: cần thêm seed hoặc thêm item trên slice `denial` (cỡ mẫu), không phải ngưỡng khác.
+- **Sàn `money_movement/refund_amount_correct` = 1.0 chỉ hợp lý khi nhiễu A/A = 0.** Với LLM thật phải đo lại A/A; nếu dải nhiễu > 0, sàn này sẽ báo nhầm.
+- **integrity_check không chạy lại agent:** một report bị sửa cả `rows` lẫn `metrics` cho khớp nhau vẫn qua; chỉ chạy lại eval trong CI (như `ci_check` làm với baseline v1) mới chặn được.
+- **Slice tag lấy từ nhãn:** item bị gán nhãn sai sẽ nằm sai slice; integrity chỉ đảm bảo tag giống baseline, không đảm bảo tag đúng.
